@@ -5,6 +5,12 @@
     <script src="main.js"></script>
 </head>
 <body>
-    <canvas id="canvas" width="1280" height="720"></canvas>
+    <div>
+        <canvas id="canvas" width="1280" height="720"></canvas>
+    </div>
+    <div>
+        <input type="number" value=".99" max="1" min="0" step="0.01" onblur="setElasticity(this.value);"/>
+        <input type="button" value="reset" onclick="reset();"/>
+    </div>
 </body>
 </html>
