@@ -5,7 +5,7 @@ var i_step = 0;
 const FrameWidth = 1280;
 const FrameHeight = 720;
 const FrameRate = 240;  // fps
-const Elasticity = .9;
+const Elasticity = .99;
 const Background = "#ffe7c9"
 
 function main() {
