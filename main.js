@@ -24,14 +24,29 @@ function main() {
 
 function reset() {
     actors = [];
-    ball = {x: 640, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':-1000, rx: 10, ry: 10, shape:'circle', fillStyle: "red"};
-    actors.push(ball);
+    ball1 = {x: 640, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "red"};
+    ball2 = {x: 400, y: 50, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "blue"};
+    ball3 = {x: 640, y: 200, 'vx':-1500, 'vy':1000, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "purple"};
+    ball4 = {x: 100, y: 700, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "green"};
+    ball5 = {x: 1000, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "yellow"};
+    ball6 = {x: 700, y: 400, 'vx':1500, 'vy':-1000, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "pink"};
+    ball7 = {x: 1200, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "orange"};
+    ball8 = {x: 600, y: 600, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "teal"};
+    actors.push(ball1);
+    actors.push(ball2);
+    actors.push(ball3);
+    actors.push(ball4);
+    actors.push(ball5);
+    actors.push(ball6);
+    actors.push(ball7);
+    actors.push(ball8);
     step();
 }
 
 function step() {
     drawBackground();
     wallCollission(actors);
+    objectCollisions(actors);
     updateKin(actors);
     renderObjects(actors);
     i_step++;
@@ -59,6 +74,45 @@ function wallCollission(objects) {
         else if (value.x - value.rx <= 0) {
             value.x = value.rx;
             value.vx *= -elasticity;
+        }
+    });
+}
+
+function objectCollisions(objects) {
+    objects.forEach(function (value1, index1, array) {
+        for(var index2 = index1 + 1; index2 < array.length; index2++) {
+            var value2 = array[index2];
+            // Circle
+            // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
+            var dx = value1.x - value2.x;
+            var dy = value1.y - value2.y;
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < value1.rx + value2.rx) {
+                var energy1 = elasticity * (Math.abs(value1.vx) + Math.abs(value1.vy));
+                var energy2 = elasticity * (Math.abs(value2.vx) + Math.abs(value2.vy));
+                var energySplit = (energy1 + energy2) / 2;
+                energy1 = energySplit;
+                energy2 = energySplit;
+                // var energy2 = 0.5 * (value2.vx * value2.vx + value2.vy * value2.vy);
+                var xprop = Math.abs(dx)/(Math.abs(dx) + Math.abs(dy));
+                var xdir = Math.sign(dx);
+                var ydir = Math.sign(dy)
+                value1.vx = xdir * energy1 * xprop;
+                value1.vy = - ydir * energy1 * (1 - xprop);
+                value2.vx = - xdir * energy2 * xprop;
+                value2.vy = ydir * energy2 * (1 - xprop);
+
+                // value2.x = 
+            }
+
+            // rectangle
+            // if (value1.x - value1.rx < value2.x + value2.rx &&
+            //     value1.x + value1.rx > value2.x - value2.rx &&
+            //     value1.y - value1.ry < value2.y + value2.ry &&
+            //     value1.y + value1.ry > value2.y - value2.ry )
+            // {
+            //     // collision detected
+            // }
         }
     });
 }
