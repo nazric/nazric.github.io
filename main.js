@@ -8,8 +8,11 @@ var elasticity = .99;
 // Constants
 const FrameWidth = 1280;
 const FrameHeight = 720;
-const FrameRate = 240;  // fps
+const FrameRate = 120;  // fps
 const Background = "#ffe7c9"
+const Gravity = -1800;
+const HorzCap = 10000;
+const VertCap = 10000;
 
 // Initial conditions
 var elasticity = .99;
@@ -18,20 +21,23 @@ function main() {
     canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d');
 
+    window.addEventListener("keydown", keyDown, false);
+    window.addEventListener("keyup", keyUp, false);
+
     reset();
     window.setInterval(step, 1000 * (1/FrameRate));
 }
 
 function reset() {
     actors = [];
-    ball1 = {x: 640, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "red"};
-    ball2 = {x: 400, y: 50, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "blue"};
-    ball3 = {x: 640, y: 200, 'vx':-1500, 'vy':1000, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "purple"};
-    ball4 = {x: 100, y: 700, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "green"};
-    ball5 = {x: 1000, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "yellow"};
-    ball6 = {x: 700, y: 400, 'vx':1500, 'vy':-1000, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "pink"};
-    ball7 = {x: 1200, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "orange"};
-    ball8 = {x: 600, y: 600, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':-1800, rx: 40, ry: 40, shape:'circle', fillStyle: "teal"};
+    ball1 = {x: 640, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':0, rx: 40, ry: 40, shape:'circle', fillStyle: "red"};
+    ball2 = {x: 400, y: 50, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "blue"};
+    ball3 = {x: 640, y: 200, 'vx':-1500, 'vy':1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "purple"};
+    ball4 = {x: 100, y: 700, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "green"};
+    ball5 = {x: 1000, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "yellow"};
+    ball6 = {x: 700, y: 400, 'vx':1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "pink"};
+    ball7 = {x: 1200, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "orange"};
+    ball8 = {x: 600, y: 600, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "teal"};
     actors.push(ball1);
     actors.push(ball2);
     actors.push(ball3);
@@ -50,6 +56,59 @@ function step() {
     updateKin(actors);
     renderObjects(actors);
     i_step++;
+}
+
+function keyDown(event) {
+    var key = event.keyCode;
+    // alert(key);
+    // left
+    if (key == 65 || key == 37) {
+        ball1.ax = -5000;
+        if (-ball1.vx >= HorzCap) {
+            ball1.vx = - HorzCap;
+        }
+    }
+    // right
+    else if(key == 68 || key == 39) {
+        ball1.ax = 5000;
+        if (ball1.vx >= HorzCap) {
+            ball1.vx = HorzCap
+        }
+    }
+    // up
+    else if(key == 87 || key == 38) {
+        ball1.ay = 5000;
+        if (ball1.vy >= VertCap) {
+            ball1.vy = VertCap
+        }
+    }
+    // down
+    else if(key == 83 || key == 40) {
+        ball1.ay = -5000;
+        if (ball1.vy >= VertCap) {
+            ball1.vy = - VertCap
+        }
+    }
+}
+
+function keyUp(event) {
+    var key = event.keyCode;
+    // left
+    if (key == 65 || key == 37) {
+        ball1.ax = 0;
+    }
+    // right
+    else if(key == 68 || key == 39) {
+        ball1.ax = 0;
+    }
+    // up
+    else if(key == 87 || key == 38) {
+        ball1.ay = 0;
+    }
+    // down
+    else if(key == 83 || key == 40) {
+        ball1.ay = 0;
+    }
 }
 
 function drawBackground() {
