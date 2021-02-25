@@ -3,19 +3,19 @@ var canvas;
 var ctx;
 var ball;
 var i_step = 0;
-var elasticity = .99;
+var elasticity = .85;
 
 // Constants
 const FrameWidth = 1280;
 const FrameHeight = 720;
 const FrameRate = 120;  // fps
 const Background = "#ffe7c9"
-const Gravity = -1800;
-const HorzCap = 10000;
-const VertCap = 10000;
+const Gravity = -1000;
+const HorzCap = 1000;
+const VertCap = 1000;
 
 // Initial conditions
-var elasticity = .99;
+var elasticity = .63;
 
 function main() {
     canvas = document.getElementById('canvas');
@@ -30,30 +30,31 @@ function main() {
 
 function reset() {
     actors = [];
-    ball1 = {x: 640, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':0, rx: 40, ry: 40, shape:'circle', fillStyle: "red"};
-    ball2 = {x: 400, y: 50, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "blue"};
-    ball3 = {x: 640, y: 200, 'vx':-1500, 'vy':1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "purple"};
-    ball4 = {x: 100, y: 700, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "green"};
-    ball5 = {x: 1000, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "yellow"};
-    ball6 = {x: 700, y: 400, 'vx':1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "pink"};
-    ball7 = {x: 1200, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "orange"};
-    ball8 = {x: 600, y: 600, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, shape:'circle', fillStyle: "teal"};
+    ball1 = {x: 640, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: false, shape:'circle', fillStyle: "red"};
+    ball2 = {x: 400, y: 50, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 20, ry: 20, recoil: true, shape:'circle', fillStyle: "blue"};
+    // ball3 = {x: 640, y: 200, 'vx':-1500, 'vy':1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "purple"};
+    // ball4 = {x: 100, y: 700, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "green"};
+    // ball5 = {x: 1000, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "yellow"};
+    // ball6 = {x: 700, y: 400, 'vx':1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "pink"};
+    // ball7 = {x: 1200, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "orange"};
+    // ball8 = {x: 600, y: 600, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "teal"};
     actors.push(ball1);
     actors.push(ball2);
-    actors.push(ball3);
-    actors.push(ball4);
-    actors.push(ball5);
-    actors.push(ball6);
-    actors.push(ball7);
-    actors.push(ball8);
+    // actors.push(ball3);
+    // actors.push(ball4);
+    // actors.push(ball5);
+    // actors.push(ball6);
+    // actors.push(ball7);
+    // actors.push(ball8);
     step();
 }
 
 function step() {
     drawBackground();
-    wallCollission(actors);
     objectCollisions(actors);
+    
     updateKin(actors);
+    wallCollission(actors);
     renderObjects(actors);
     i_step++;
 }
@@ -85,9 +86,7 @@ function keyDown(event) {
     // down
     else if(key == 83 || key == 40) {
         ball1.ay = -5000;
-        if (ball1.vy >= VertCap) {
-            ball1.vy = - VertCap
-        }
+
     }
 }
 
@@ -103,11 +102,14 @@ function keyUp(event) {
     }
     // up
     else if(key == 87 || key == 38) {
-        ball1.ay = 0;
+        ball1.ay = Gravity;
     }
     // down
     else if(key == 83 || key == 40) {
-        ball1.ay = 0;
+        ball1.ay = Gravity;
+    }
+    else if(key == 82) {
+        reset();
     }
 }
 
@@ -118,22 +120,43 @@ function drawBackground() {
 
 function wallCollission(objects) {
     objects.forEach(function(value, index, array) {
-        if(value.y + value.ry >= FrameHeight) {
-            value.y = FrameHeight - value.ry;
-            value.vy *= -elasticity;
+        if (value.recoil) {
+            if(value.y + value.ry >= FrameHeight) {
+                value.y = FrameHeight - value.ry;
+                value.vy *= -elasticity;
+            }
+            else if(value.y - value.ry <= 0) {
+                value.y = value.rx;
+                value.vy *= -elasticity;
+            }
+            if(value.x + value.rx >= FrameWidth){
+                value.x = FrameWidth - value.rx;
+                value.vx *= -elasticity;
+            } 
+            else if (value.x - value.rx <= 0) {
+                value.x = value.rx;
+                value.vx *= -elasticity;
+            }
         }
-        else if(value.y - value.ry <= 0) {
-            value.y = value.rx;
-            value.vy *= -elasticity;
+        else {
+            if(value.y + value.ry > FrameHeight) {
+                value.y = FrameHeight - value.ry;
+                value.vy = 0;
+            }
+            else if(value.y - value.ry <= 0) {
+                value.y = value.ry;
+                value.vy = 0;
+            }
+            if(value.x + value.rx > FrameWidth){
+                value.x = FrameWidth - value.rx;
+                value.vx = 0;
+            } 
+            else if (value.x - value.rx <= 0) {
+                value.x = value.rx;
+                value.vx = 0;
+            }
         }
-        if(value.x + value.rx >= FrameWidth){
-            value.x = FrameWidth - value.rx;
-            value.vx *= -elasticity;
-        } 
-        else if (value.x - value.rx <= 0) {
-            value.x = value.rx;
-            value.vx *= -elasticity;
-        }
+
     });
 }
 
@@ -149,18 +172,32 @@ function objectCollisions(objects) {
             if (dist < value1.rx + value2.rx) {
                 var energy1 = elasticity * (Math.abs(value1.vx) + Math.abs(value1.vy));
                 var energy2 = elasticity * (Math.abs(value2.vx) + Math.abs(value2.vy));
-                var energySplit = (energy1 + energy2) / 2;
-                energy1 = energySplit;
-                energy2 = energySplit;
+                if (!value1.recoil) {
+                    energy2 += energy1;
+                    energy1 = 0;
+                }
+                else if(!value2.recoil) {
+                    energy1 += energy2;
+                    energy2 = 0;
+                }
+                else {
+                    var energySplit = (energy1 + energy2) / 2;
+                    energy1 = energySplit;
+                    energy2 = energySplit;
+                }
                 // var energy2 = 0.5 * (value2.vx * value2.vx + value2.vy * value2.vy);
                 var xprop = Math.abs(dx)/(Math.abs(dx) + Math.abs(dy));
                 var xdir = Math.sign(dx);
                 var ydir = Math.sign(dy)
-                value1.vx = xdir * energy1 * xprop;
-                value1.vy = - ydir * energy1 * (1 - xprop);
-                value2.vx = - xdir * energy2 * xprop;
-                value2.vy = ydir * energy2 * (1 - xprop);
 
+                if (value1.recoil) {
+                    value1.vx = xdir * energy1 * xprop;
+                    value1.vy = - ydir * energy1 * (1 - xprop);
+                }
+                if(value2.recoil) {
+                    value2.vx = - xdir * energy2 * xprop;
+                    value2.vy = ydir * energy2 * (1 - xprop);
+                }
                 // value2.x = 
             }
 
@@ -180,6 +217,12 @@ function updateKin(objects) {
     objects.forEach(function(value, index, array) {
         value.vx += value.ax / FrameRate;
         value.vy += value.ay / FrameRate;
+        if (Math.abs(value.vy) > VertCap) {
+            value.vy = Math.sign(value.vy) * VertCap;
+        }
+        if (Math.abs(value.vx) > HorzCap) {
+            value.vx = Math.sign(value.vx) * HorzCap;
+        }
         value.x += value.vx / FrameRate;
         value.y -= value.vy / FrameRate;
     });
