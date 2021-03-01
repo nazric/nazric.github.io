@@ -9,10 +9,14 @@ var elasticity = .85;
 const FrameWidth = 1280;
 const FrameHeight = 720;
 const FrameRate = 120;  // fps
-const Background = "#ffe7c9"
+const Background = "#ffe7c9";
+const Net = "green";
 const Gravity = -1000;
 const HorzCap = 1000;
 const VertCap = 1000;
+const NetHeight = 300;
+const NumNetPoly = 300;
+const TopOfNet = {x: FrameWidth/2, y:FrameHeight - NetHeight, 'vx':0, 'vy':0, 'ax':0, 'ay':0, rx: 2, ry: 2, recoil: false, shape:'circle', fillStyle: Net}
 
 // Initial conditions
 var elasticity = .63;
@@ -30,16 +34,22 @@ function main() {
 
 function reset() {
     actors = [];
-    ball1 = {x: 640, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: false, shape:'circle', fillStyle: "red"};
-    ball2 = {x: 400, y: 50, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 20, ry: 20, recoil: true, shape:'circle', fillStyle: "blue"};
+    actors.push();
+
+    ball1 = {x: 640, y: 50, 'vx':1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: false, shape:'circle', fillStyle: "red"};
+    ball2 = {x: 400, y: 50, 'vx':700, 'vy':500, 'ax':0, 'ay':Gravity, rx: 20, ry: 20, recoil: true, shape:'circle', fillStyle: "blue"};
+    actors.push(ball1);
+    actors.push(ball2);
+    for(var i = 0; i < NumNetPoly; i++) {
+        // 
+    }
     // ball3 = {x: 640, y: 200, 'vx':-1500, 'vy':1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "purple"};
     // ball4 = {x: 100, y: 700, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "green"};
     // ball5 = {x: 1000, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "yellow"};
     // ball6 = {x: 700, y: 400, 'vx':1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "pink"};
     // ball7 = {x: 1200, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "orange"};
     // ball8 = {x: 600, y: 600, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "teal"};
-    actors.push(ball1);
-    actors.push(ball2);
+
     // actors.push(ball3);
     // actors.push(ball4);
     // actors.push(ball5);
@@ -51,10 +61,13 @@ function reset() {
 
 function step() {
     drawBackground();
+    drawNet();
+    wallCollission(actors);
     objectCollisions(actors);
+    netCollision(actors);
     
     updateKin(actors);
-    wallCollission(actors);
+    
     renderObjects(actors);
     i_step++;
 }
@@ -118,12 +131,67 @@ function drawBackground() {
     ctx.fillRect(0, 0, FrameWidth, FrameHeight);
 }
 
+function drawNet(){
+    ctx.fillStyle = Net;
+    ctx.fillRect(FrameWidth/2 - 2, FrameHeight - NetHeight, 4, NetHeight);
+}
+
+function netCollision(objects){
+    objects.forEach(function(value, index, array) {
+        if(value.y + value.ry > FrameHeight - NetHeight) {
+            if(value.y < FrameHeight - NetHeight) {
+                // Sweetspot
+                if (value.x - value.rx < FrameWidth/2 - 2 && value.x + value.rx > FrameWidth/2 + 2) {
+                    circleCollision(TopOfNet, value);
+                }
+
+            }
+            else {
+                // Below Sweetspot
+                if (value.x > FrameWidth / 2) {
+                    if (value.x - value.rx < FrameWidth / 2 + 2) {
+                        value.x = FrameWidth / 2 + 2 + value.rx;
+                        if (value.recoil)
+                            value.vx *= -elasticity;
+                        else 
+                            value.vx = 0;
+                    }
+                }
+                else {
+                    if(value.x + value.rx > FrameWidth / 2 - 2) {
+                        value.x = FrameWidth / 2 - 2 - value.rx;
+                        if (value.recoil)
+                            value.vx *= -elasticity;
+                        else 
+                            value.vx = 0;
+                    }
+                }                
+            }
+        }
+    });
+}   
+
+function goal(rightScored) {
+    if(rightScored) {
+        console.log("right scores!!!!!");
+    }
+    else{
+        console.log("left score!!!!");
+    }
+}
+
 function wallCollission(objects) {
     objects.forEach(function(value, index, array) {
         if (value.recoil) {
             if(value.y + value.ry >= FrameHeight) {
                 value.y = FrameHeight - value.ry;
                 value.vy *= -elasticity;
+                var rightScored = true;
+                if(value.x > FrameWidth/2) {
+                    rightScored = false;
+                }
+                reset();
+                goal(rightScored);
             }
             else if(value.y - value.ry <= 0) {
                 value.y = value.rx;
@@ -165,41 +233,7 @@ function objectCollisions(objects) {
         for(var index2 = index1 + 1; index2 < array.length; index2++) {
             var value2 = array[index2];
             // Circle
-            // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
-            var dx = value1.x - value2.x;
-            var dy = value1.y - value2.y;
-            var dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < value1.rx + value2.rx) {
-                var energy1 = elasticity * (Math.abs(value1.vx) + Math.abs(value1.vy));
-                var energy2 = elasticity * (Math.abs(value2.vx) + Math.abs(value2.vy));
-                if (!value1.recoil) {
-                    energy2 += energy1;
-                    energy1 = 0;
-                }
-                else if(!value2.recoil) {
-                    energy1 += energy2;
-                    energy2 = 0;
-                }
-                else {
-                    var energySplit = (energy1 + energy2) / 2;
-                    energy1 = energySplit;
-                    energy2 = energySplit;
-                }
-                // var energy2 = 0.5 * (value2.vx * value2.vx + value2.vy * value2.vy);
-                var xprop = Math.abs(dx)/(Math.abs(dx) + Math.abs(dy));
-                var xdir = Math.sign(dx);
-                var ydir = Math.sign(dy)
-
-                if (value1.recoil) {
-                    value1.vx = xdir * energy1 * xprop;
-                    value1.vy = - ydir * energy1 * (1 - xprop);
-                }
-                if(value2.recoil) {
-                    value2.vx = - xdir * energy2 * xprop;
-                    value2.vy = ydir * energy2 * (1 - xprop);
-                }
-                // value2.x = 
-            }
+            circleCollision(value1, value2);
 
             // rectangle
             // if (value1.x - value1.rx < value2.x + value2.rx &&
@@ -211,6 +245,47 @@ function objectCollisions(objects) {
             // }
         }
     });
+}
+
+function circleCollision(value1, value2) {
+    // Circle
+    // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
+    var dx = value1.x - value2.x;
+    var dy = value1.y - value2.y;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < value1.rx + value2.rx) {
+
+        var tot_energy = elasticity * (Math.abs(value1.vx) + Math.abs(value2.vx) + Math.abs(value1.vy) + Math.abs(value2.vy));
+
+        var theta = Math.atan2(dy, dx);
+        var xprop = Math.cos(theta);
+        var yprop = Math.sin(theta);
+        value2.x = value1.x - xprop * (value1.rx + value2.rx);
+        value2.y = value1.y - yprop * (value1.ry + value2.ry);
+
+        if (!value1.recoil) {
+            energy2 = tot_energy;
+            energy1 = 0;
+        }
+        else if(!value2.recoil) {
+            energy1 = tot_energy;
+            energy2 = 0;
+        }
+        else {
+            var energySplit = tot_energy * 0.5;
+            energy1 = energySplit;
+            energy2 = energySplit;
+        }
+
+        if (value1.recoil) {
+            value1.vx = energy1 * xprop;
+            value1.vy = energy1 * yprop;
+        }
+        if(value2.recoil) {
+            value2.vx = - energy2 * xprop;
+            value2.vy = energy2 * yprop;
+        }
+    }
 }
 
 function updateKin(objects) {
