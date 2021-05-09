@@ -17,7 +17,7 @@ const Gravity = -750;
 const NetHeight = 300;
 const NumNetPoly = 300;
 const TopOfNet = {x: FrameWidth/2, y:FrameHeight - NetHeight, 'vx':0, 'vy':0, 'ax':0, 'ay':0, rx: 2, ry: 2, recoil: false, shape:'circle', fillStyle: Net}
-const colourLoop = ["blue", ""];
+const MaxHits = 4;
 
 // Initial conditions
 var elasticity = .63;
@@ -35,16 +35,18 @@ function main() {
 
 function reset() {
     actors = [];
-    actors.push();
 
     player1 = {x: 50, y: FrameHeight-40, newx: -1, newy: -1, 'vx':0, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: false, isActor:true, shape:'circle', fillStyle: "#0ba2e3",
-               upPress: false, downPress: false, rightPress: false, leftPress: false};
+               upPress: false, downPress: false, rightPress: false, leftPress: false, collisionHandler: null};
     player2 = {x: FrameWidth - 50, y: FrameHeight-40, newx: -1, newy: -1, 'vx':0, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: false, isActor:true, shape:'circle', fillStyle: "purple",
-               upPress: false, downPress: false, rightPress: false, leftPress: false};
-    ball2 = {x: 400, y: 50, newx: -1, newy: -1, 'vx':700, 'vy':500, 'ax':0, 'ay':Gravity, rx: 20, ry: 20, recoil: true, shape:'circle', fillStyle: "blue"};
+               upPress: false, downPress: false, rightPress: false, leftPress: false, collisionHandler: null};
+    ball2 = {x: 400, y: 50, newx: -1, newy: -1, 'vx':700, 'vy':500, 'ax':0, 'ay':Gravity, rx: 20, ry: 20, recoil: true, shape:'circle', fillStyle: "#ff8000",
+             collisionHandler: nextColor, originalColour: "#ff8000", numHits: 0};
+    
     actors.push(player1);
     actors.push(player2);
     actors.push(ball2);
+
     // ball3 = {x: 640, y: 200, 'vx':-1500, 'vy':1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "purple"};
     // ball4 = {x: 100, y: 700, 'vx':-1500, 'vy':-1000, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "green"};
     // ball5 = {x: 1000, y: 50, 'vx':1500, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: true, shape:'circle', fillStyle: "yellow"};
@@ -58,10 +60,11 @@ function reset() {
     // actors.push(ball6);
     // actors.push(ball7);
     // actors.push(ball8);
+
     step();
 }
 
-function setSpeedcap(newVal) {
+function setSpeedCap(newVal) {
     HorzCap = newVal;
     VertCap = newVal;
 }
@@ -79,6 +82,18 @@ function step() {
     
     renderObjects(actors);
     // i_step++;
+}
+
+function nextColor(obj, reset) {
+    
+    if(reset) {
+        obj.fillStyle = obj.originalColour;
+        obj.numHits = 0;
+    }
+    else {
+        obj.numHits++;
+        obj.fillStyle = "rgb(255, " + (MaxHits-obj.numHits)*128/MaxHits + ", 0)";
+    }
 }
 
 function handleKeys() {
@@ -206,7 +221,7 @@ function collideNet(object) {
         }
     }
     else {
-        if(object.x + object.rx > FrameWidth / 2 - 2) {
+        if(object.x + object.rx > FrameWidth / 2 + 2) {
             object.x = FrameWidth / 2 - 2 - object.rx;
             if (object.recoil)
                 object.vx *= -elasticity;
@@ -223,6 +238,10 @@ function netCollision(objects){
         }
         else if(value.isActor || value.y >= FrameHeight - NetHeight) {
             collideNet(value);
+        }
+        else if(!value.isActor && value.collisionHandler != null && value.y < FrameHeight - NetHeight && value.x 
+            && value.x - value.rx < FrameWidth / 2 + 2 && value.x + value.rx > FrameWidth / 2 - 2) {
+            value.collisionHandler(value, true);
         }
     });
 }   
@@ -309,6 +328,10 @@ function circleCollision(value1, value2) {
     var dy = value1.y - value2.y;
     var dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < value1.rx + value2.rx) {
+        if (value1.collisionHandler != null)
+            value1.collisionHandler(value1, false);
+        if (value2.collisionHandler != null)
+            value2.collisionHandler(value2, false);
 
         var tot_energy = elasticity * (Math.abs(value1.vx) + Math.abs(value2.vx) + Math.abs(value1.vy) + Math.abs(value2.vy));
 
@@ -323,18 +346,10 @@ function circleCollision(value1, value2) {
         if (!value1.recoil) {
             energy2 = tot_energy;
             energy1 = 0;
-            // value1.ax = 0;
-            // value1.ay = 0;
-            // value1.vx = 0;
-            // value1.vy = 0;
         }
         else if(!value2.recoil) {
             energy1 = tot_energy;
             energy2 = 0;
-            // value2.ax = 0;
-            // value2.ay = 0;
-            // value2.vx = 0;
-            // value2.vy = 0;
         }
         else {
             var energySplit = tot_energy * 0.5;
