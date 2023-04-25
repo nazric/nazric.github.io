@@ -4,23 +4,23 @@ var ctx;
 var ball;
 var i_step = 0;
 var elasticity = .85;
-var HorzCap = 700;
-var VertCap = 700;
+var horizontalSpeedCap = 700;
+var verticleSpeedCap = 700;
+var step_index = 0;
 
 // Constants
-const FrameWidth = 1280;
-const FrameHeight = 720;
-const FrameRate = 60;  // fps
-const Background = "#ffe7c9";
-const Net = "green";
-const Gravity = -750;
-const NetHeight = 300;
-const NumNetPoly = 300;
-const TopOfNet = {x: FrameWidth/2, y:FrameHeight - NetHeight, 'vx':0, 'vy':0, 'ax':0, 'ay':0, rx: 2, ry: 2, recoil: false, shape:'circle', fillStyle: Net}
-const MaxHits = 4;
-
-// Initial conditions
-var elasticity = .63;
+const FRAME_WIDTH = 1280;
+const FRAME_HEIGHT = 720;
+const PHYSICS_RATE = 360; // physics tick rate (must be a multiple of FPS)
+const FRAME_RATE = 120;  // fps
+const FRAME_RATIO = PHYSICS_RATE / FRAME_RATE;
+const BACKGROUND_COLOUR = "#ffe7c9";
+const NET_COLOUR = "green";
+const GRAVITY = -750;
+const NET_HEIGHT = 300;
+const NET_POLYGON_COUNT = 300;
+const TOP_OF_NET_OBJ = {x: FRAME_WIDTH/2, y:FRAME_HEIGHT - NET_HEIGHT, 'vx':0, 'vy':0, 'ax':0, 'ay':0, rx: 2, ry: 2, recoil: false, shape:'circle', fillStyle: NET_COLOUR}
+const MAX_HITS = 4;
 
 function main() {
     canvas = document.getElementById('canvas');
@@ -30,17 +30,17 @@ function main() {
     window.addEventListener("keyup", keyUp, false);
 
     reset();
-    window.setInterval(step, 1000.0 * (1.0/FrameRate));
+    window.setInterval(step, 1000.0 * (1.0/PHYSICS_RATE));
 }
 
 function reset() {
     actors = [];
 
-    player1 = {x: 50, y: FrameHeight-40, newx: -1, newy: -1, 'vx':0, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: false, isActor:true, shape:'circle', fillStyle: "#0ba2e3",
+    player1 = {x: 50, y: FRAME_HEIGHT-40, newx: -1, newy: -1, 'vx':0, 'vy':0, 'ax':0, 'ay':GRAVITY, rx: 40, ry: 40, recoil: false, isActor:true, shape:'circle', fillStyle: "#0ba2e3",
                upPress: false, downPress: false, rightPress: false, leftPress: false, collisionHandler: null};
-    player2 = {x: FrameWidth - 50, y: FrameHeight-40, newx: -1, newy: -1, 'vx':0, 'vy':0, 'ax':0, 'ay':Gravity, rx: 40, ry: 40, recoil: false, isActor:true, shape:'circle', fillStyle: "purple",
+    player2 = {x: FRAME_WIDTH - 50, y: FRAME_HEIGHT-40, newx: -1, newy: -1, 'vx':0, 'vy':0, 'ax':0, 'ay':GRAVITY, rx: 40, ry: 40, recoil: false, isActor:true, shape:'circle', fillStyle: "purple",
                upPress: false, downPress: false, rightPress: false, leftPress: false, collisionHandler: null};
-    ball2 = {x: 400, y: 50, newx: -1, newy: -1, 'vx':700, 'vy':500, 'ax':0, 'ay':Gravity, rx: 20, ry: 20, recoil: true, shape:'circle', fillStyle: "#ff8000",
+    ball2 = {x: 400, y: 50, newx: -1, newy: -1, 'vx':700, 'vy':500, 'ax':0, 'ay':GRAVITY, rx: 20, ry: 20, recoil: true, shape:'circle', fillStyle: "#ff8000",
              collisionHandler: nextColor, originalColour: "#ff8000", numHits: 0};
     
     actors.push(player1);
@@ -65,13 +65,16 @@ function reset() {
 }
 
 function setSpeedCap(newVal) {
-    HorzCap = newVal;
-    VertCap = newVal;
+    horizontalSpeedCap = newVal;
+    verticleSpeedCap = newVal;
 }
 
 function step() {
-    drawBackground();
-    drawNet();
+    if(step_index == 0) {
+        drawBackground();
+        drawNet();
+        renderObjects(actors);
+    }
 
     handleKeys();
     wallCollission(actors);
@@ -79,9 +82,9 @@ function step() {
     netCollision(actors);
     
     updateKin(actors);
-    
-    renderObjects(actors);
-    // i_step++;
+
+    step_index++;
+    step_index = step_index % FRAME_RATIO;
 }
 
 function nextColor(obj, reset) {
@@ -92,7 +95,7 @@ function nextColor(obj, reset) {
     }
     else {
         obj.numHits++;
-        obj.fillStyle = "rgb(255, " + (MaxHits-obj.numHits)*128/MaxHits + ", 0)";
+        obj.fillStyle = "rgb(255, " + (MAX_HITS-obj.numHits)*128/MAX_HITS + ", 0)";
     }
 }
 
@@ -128,13 +131,13 @@ function handlePlayerInput(playerObj) {
     }
     // down
     else if(playerObj.downPress) {
-        playerObj.ay = -5000 + Gravity;
+        playerObj.ay = -5000 + GRAVITY;
         if(playerObj.vy > -100) {
             playerObj.vy = -100;
         }
     }
     else {
-        playerObj.ay = Gravity;
+        playerObj.ay = GRAVITY;
     }
 }
 
@@ -201,19 +204,19 @@ function keyUp(event) {
 }
 
 function drawBackground() {
-    ctx.fillStyle = Background;
-    ctx.fillRect(0, 0, FrameWidth, FrameHeight);
+    ctx.fillStyle = BACKGROUND_COLOUR;
+    ctx.fillRect(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
 }
 
 function drawNet(){
-    ctx.fillStyle = Net;
-    ctx.fillRect(FrameWidth/2 - 2, FrameHeight - NetHeight, 4, NetHeight);
+    ctx.fillStyle = NET_COLOUR;
+    ctx.fillRect(FRAME_WIDTH/2 - 2, FRAME_HEIGHT - NET_HEIGHT, 4, NET_HEIGHT);
 }
 
 function collideNet(object) {
-    if (object.x > FrameWidth / 2) {
-        if (object.x - object.rx < FrameWidth / 2 + 2) {
-            object.x = FrameWidth / 2 + 2 + object.rx;
+    if (object.x > FRAME_WIDTH / 2) {
+        if (object.x - object.rx < FRAME_WIDTH / 2 + 2) {
+            object.x = FRAME_WIDTH / 2 + 2 + object.rx;
             if (object.recoil)
                 object.vx *= -elasticity;
             else 
@@ -221,8 +224,8 @@ function collideNet(object) {
         }
     }
     else {
-        if(object.x + object.rx > FrameWidth / 2 + 2) {
-            object.x = FrameWidth / 2 - 2 - object.rx;
+        if(object.x + object.rx > FRAME_WIDTH / 2 + 2) {
+            object.x = FRAME_WIDTH / 2 - 2 - object.rx;
             if (object.recoil)
                 object.vx *= -elasticity;
             else 
@@ -233,37 +236,37 @@ function collideNet(object) {
 
 function netCollision(objects){
     objects.forEach(function(value, index, array) {
-        if(!value.isActor && value.y + value.ry > FrameHeight - NetHeight && value.y < FrameHeight - NetHeight) {
-            circleCollision(TopOfNet, value);
+        if(!value.isActor && value.y + value.ry > FRAME_HEIGHT - NET_HEIGHT && value.y < FRAME_HEIGHT - NET_HEIGHT) {
+            circleCollision(TOP_OF_NET_OBJ, value);
         }
-        else if(value.isActor || value.y >= FrameHeight - NetHeight) {
+        else if(value.isActor || value.y >= FRAME_HEIGHT - NET_HEIGHT) {
             collideNet(value);
         }
-        else if(!value.isActor && value.collisionHandler != null && value.y < FrameHeight - NetHeight && value.x 
-            && value.x - value.rx < FrameWidth / 2 + 2 && value.x + value.rx > FrameWidth / 2 - 2) {
+        else if(!value.isActor && value.collisionHandler != null && value.y < FRAME_HEIGHT - NET_HEIGHT && value.x 
+            && value.x - value.rx < FRAME_WIDTH / 2 + 2 && value.x + value.rx > FRAME_WIDTH / 2 - 2) {
             value.collisionHandler(value, true);
         }
     });
 }   
 
 function goal(rightScored) {
-    // if(rightScored) {
-    //     console.log("right scores!!!!!");
-    // }
-    // else{
-    //     console.log("left score!!!!");
-    // }
+    if(rightScored) {
+        console.log("right scores!!!!!");
+    }
+    else{
+        console.log("left score!!!!");
+    }
     // reset();
 }
 
 function wallCollission(objects) {
     objects.forEach(function(value, index, array) {
         if (value.recoil) {
-            if(value.y + value.ry >= FrameHeight) {
-                value.y = FrameHeight - value.ry;
+            if(value.y + value.ry >= FRAME_HEIGHT) {
+                value.y = FRAME_HEIGHT - value.ry;
                 value.vy *= -elasticity;
                 var rightScored = true;
-                if(value.x > FrameWidth/2) {
+                if(value.x > FRAME_WIDTH/2) {
                     rightScored = false;
                 }
                 goal(rightScored);
@@ -272,8 +275,8 @@ function wallCollission(objects) {
                 value.y = value.rx;
                 value.vy *= -elasticity;
             }
-            if(value.x + value.rx >= FrameWidth){
-                value.x = FrameWidth - value.rx;
+            if(value.x + value.rx >= FRAME_WIDTH){
+                value.x = FRAME_WIDTH - value.rx;
                 value.vx *= -elasticity;
             } 
             else if (value.x - value.rx <= 0) {
@@ -282,16 +285,16 @@ function wallCollission(objects) {
             }
         }
         else {
-            if(value.y + value.ry > FrameHeight) {
-                value.y = FrameHeight - value.ry;
+            if(value.y + value.ry > FRAME_HEIGHT) {
+                value.y = FRAME_HEIGHT - value.ry;
                 value.vy = 0;
             }
             else if(value.y - value.ry <= 0) {
                 value.y = value.ry;
                 value.vy = 0;
             }
-            if(value.x + value.rx > FrameWidth){
-                value.x = FrameWidth - value.rx;
+            if(value.x + value.rx > FRAME_WIDTH){
+                value.x = FRAME_WIDTH - value.rx;
                 value.vx = 0;
             } 
             else if (value.x - value.rx <= 0) {
@@ -375,16 +378,16 @@ function updateKin(objects) {
         value.newx = -1;
         value.newy = -1;
         
-        value.vx += value.ax / FrameRate;
-        value.vy += value.ay / FrameRate;
-        if (Math.abs(value.vy) > VertCap) {
-            value.vy = Math.sign(value.vy) * VertCap;
+        value.vx += value.ax / PHYSICS_RATE;
+        value.vy += value.ay / PHYSICS_RATE;
+        if (Math.abs(value.vy) > verticleSpeedCap) {
+            value.vy = Math.sign(value.vy) * verticleSpeedCap;
         }
-        if (Math.abs(value.vx) > HorzCap) {
-            value.vx = Math.sign(value.vx) * HorzCap;
+        if (Math.abs(value.vx) > horizontalSpeedCap) {
+            value.vx = Math.sign(value.vx) * horizontalSpeedCap;
         }
-        value.x += value.vx / FrameRate;
-        value.y -= value.vy / FrameRate;
+        value.x += value.vx / PHYSICS_RATE;
+        value.y -= value.vy / PHYSICS_RATE;
     });
 
 }
